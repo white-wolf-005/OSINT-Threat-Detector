@@ -1,175 +1,174 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSINT Analyzer</title>
+    <title>OSINT Threat Intelligence Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800">OSINT Threat Analyzer</h1>
-
-        <form id="analyzeForm" class="space-y-4 mb-8">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
             <div>
-                <label for="target" class="block text-sm font-medium text-gray-700">IP-адрес, Домен или Email</label>
-                <input type="text" id="target" name="target" required
-                       placeholder="например: 8.8.8.8 или google.com"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="flex items-center gap-3">
+                    <span class="inline-block w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+                        OSINT Threat Intelligence Engine
+                    </h1>
+                </div>
+                <p class="text-sm text-slate-400 mt-1">
+                    Asynchronous Reconnaissance, BGP/ASN Telemetry, Vulnerability &amp; Exposure Analyzer
+                </p>
             </div>
-            <button type="submit" id="submitBtn"
-                    class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
-                Запустить проверку
-            </button>
-        </form>
+            <div class="flex items-center gap-3">
+                <span id="healthBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                    Checking Engine...
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-950 text-indigo-300 border border-indigo-800">
+                    TypeScript + FastAPI
+                </span>
+            </div>
+        </header>
 
-        <div id="loading" class="hidden text-center py-4 text-indigo-600 font-medium">
-            Идет анализ по базам данных...
-        </div>
+        <section id="statsBar" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+                <p class="text-xs uppercase tracking-wider text-slate-400">Total Audits Recorded</p>
+                <p id="statTotalScans" class="text-2xl font-bold text-white mt-1">0</p>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+                <p class="text-xs uppercase tracking-wider text-slate-400">Avg Threat Score</p>
+                <p id="statAvgScore" class="text-2xl font-bold text-indigo-400 mt-1">0.0</p>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+                <p class="text-xs uppercase tracking-wider text-slate-400">High-Risk Detections</p>
+                <p id="statHighRisk" class="text-2xl font-bold text-rose-400 mt-1">0</p>
+            </div>
+        </section>
 
-        <div id="resultArea" class="hidden space-y-6">
-            <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl mb-8">
+            <form id="analyzeForm" class="space-y-4">
                 <div>
-                    <p class="text-sm text-gray-500">Цель</p>
-                    <p class="text-xl font-bold text-gray-900" id="resTarget"></p>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="target" class="block text-sm font-semibold text-slate-200">
+                            Target Indicator (IPv4, Domain, or Email)
+                        </label>
+                        <span id="iocPreviewBadge" class="text-xs font-mono px-2.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                            Awaiting IOC Input
+                        </span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input
+                            type="text"
+                            id="target"
+                            name="target"
+                            required
+                            autocomplete="off"
+                            placeholder="e.g. 8.8.8.8, cloudflare.com, or security@example.com"
+                            class="flex-1 bg-slate-950 text-white px-4 py-3 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500 font-mono text-sm"
+                        />
+                        <button
+                            type="submit"
+                            id="submitBtn"
+                            class="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-50"
+                        >
+                            Run Reconnaissance
+                        </button>
+                    </div>
+                    <p id="validationHint" class="text-xs text-slate-400 mt-2"></p>
                 </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-500">Threat Score</p>
-                    <p class="text-2xl font-bold text-red-600" id="resScore"></p>
-                </div>
-            </div>
 
-            <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            </div>
-
-            <details class="group bg-gray-50 rounded-lg border border-gray-200">
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-4 text-gray-700 hover:text-indigo-600">
-                    <span>Подробный JSON-отчет</span>
-                    <span class="transition group-open:rotate-180">
-                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </span>
-                </summary>
-                <div class="p-4 pt-0 border-t border-gray-200 mt-2">
-                    <pre id="jsonResult" class="text-xs text-gray-800 overflow-x-auto"></pre>
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                    <span class="text-xs text-slate-500">Quick Presets:</span>
+                    <button type="button" data-preset="8.8.8.8" class="preset-btn text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">8.8.8.8</button>
+                    <button type="button" data-preset="1.1.1.1" class="preset-btn text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">1.1.1.1</button>
+                    <button type="button" data-preset="scanme.nmap.org" class="preset-btn text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">scanme.nmap.org</button>
+                    <button type="button" data-preset="github.com" class="preset-btn text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">github.com</button>
                 </div>
-            </details>
+            </form>
+        </section>
+
+        <div id="loading" class="hidden bg-slate-900 border border-indigo-900/60 rounded-2xl p-8 text-center mb-8">
+            <div class="inline-block w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-indigo-300 font-semibold">Querying distributed intelligence feeds...</p>
+            <p class="text-xs text-slate-400 mt-1">Correlating BGP/ASN records, Shodan IDB exposures, and OTX threat pulses</p>
         </div>
 
-        <div class="mt-8 pt-6 border-t border-gray-200">
-            <button id="loadHistoryBtn" class="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
-                Показать последние проверки
-            </button>
-            <div id="historyArea" class="mt-4 hidden space-y-3"></div>
-        </div>
+        <div id="errorAlert" class="hidden bg-rose-950/60 border border-rose-800 text-rose-200 rounded-xl p-4 mb-8 text-sm"></div>
+
+        <section id="resultArea" class="hidden space-y-6 mb-10">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                    <div>
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <span id="resTypeBadge" class="text-xs font-mono uppercase px-2.5 py-1 rounded bg-indigo-950 text-indigo-300 border border-indigo-800"></span>
+                            <span id="resCacheBadge" class="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300"></span>
+                            <span id="resRiskBadge" class="text-xs font-bold uppercase px-2.5 py-1 rounded"></span>
+                        </div>
+                        <h2 id="resTarget" class="text-2xl font-mono font-bold text-white mt-2"></h2>
+                        <p id="resResolvedIp" class="text-xs font-mono text-slate-400 mt-1"></p>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Heuristic Threat Score</p>
+                            <p id="resScore" class="text-4xl font-extrabold text-white mt-1"></p>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button id="exportJsonBtn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                                Export JSON
+                            </button>
+                            <button id="exportCsvBtn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                                Export CSV
+                            </button>
+                            <button id="exportMdBtn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                                Export Markdown
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analyticsBreakdown" class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6"></div>
+                <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+                <details class="group bg-slate-950 rounded-xl border border-slate-800 mt-6">
+                    <summary class="flex justify-between items-center font-semibold text-sm cursor-pointer list-none p-4 text-slate-300 hover:text-indigo-400">
+                        <span>Raw Telemetry Payload (JSON)</span>
+                        <span class="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <div class="p-4 pt-0 border-t border-slate-800">
+                        <pre id="jsonResult" class="text-xs font-mono text-emerald-400 overflow-x-auto"></pre>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Audit &amp; Reconnaissance History</h2>
+                    <p class="text-xs text-slate-400">Persistent PostgreSQL / SQLite telemetry log</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="historyFilterType" class="bg-slate-950 text-xs text-slate-200 px-3 py-2 rounded-lg border border-slate-700">
+                        <option value="ALL">All Types</option>
+                        <option value="IPv4">IPv4 Only</option>
+                        <option value="domain">Domains Only</option>
+                        <option value="email">Emails Only</option>
+                    </select>
+                    <input
+                        type="text"
+                        id="historySearchInput"
+                        placeholder="Filter target..."
+                        class="bg-slate-950 text-xs text-slate-200 px-3 py-2 rounded-lg border border-slate-700 font-mono"
+                    />
+                    <button id="loadHistoryBtn" type="button" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">
+                        Refresh History
+                    </button>
+                </div>
+            </div>
+            <div id="historyArea" class="space-y-2.5"></div>
+        </section>
     </div>
 
-    <script>
-        document.getElementById('analyzeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const target = document.getElementById('target').value;
-            const btn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const resultArea = document.getElementById('resultArea');
-            const summaryCards = document.getElementById('summaryCards');
-
-            btn.disabled = true;
-            resultArea.classList.add('hidden');
-            loading.classList.remove('hidden');
-            summaryCards.innerHTML = '';
-
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ target: target })
-                });
-
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    document.getElementById('resTarget').textContent = data.data.target;
-                    document.getElementById('resScore').textContent = data.data.threat_score;
-                    document.getElementById('jsonResult').textContent = JSON.stringify(data.data, null, 2);
-
-                    data.data.results.forEach(res => {
-                        let cardHtml = `<div class="p-4 rounded-lg border shadow-sm bg-white border-gray-200">
-                            <h3 class="font-bold text-gray-800 mb-2">${res.source}</h3>`;
-
-                        if (res.error) {
-                            cardHtml += `<p class="text-sm text-red-500">${res.error}</p>`;
-                        } else {
-                            if (res.source === 'AlienVault OTX') {
-                                cardHtml += `<p class="text-sm text-gray-600">Найдено угроз (Pulses): <span class="font-bold ${res.data.pulses_found > 0 ? 'text-red-600' : 'text-green-600'}">${res.data.pulses_found}</span></p>`;
-                            } else if (res.source === 'IP-API') {
-                                cardHtml += `<p class="text-sm text-gray-600">Провайдер: <b>${res.data.isp}</b></p>
-                                             <p class="text-sm text-gray-600">Локация: ${res.data.country}, ${res.data.city}</p>`;
-                            } else if (res.source === 'Shodan IDB') {
-                                const ports = res.data.ports ? res.data.ports.join(', ') : 'Нет';
-                                cardHtml += `<p class="text-sm text-gray-600">Открытые порты: <b>${ports}</b></p>`;
-                            } else if (res.source === 'HaveIBeenPwned') {
-                                cardHtml += `<p class="text-sm text-gray-600">Утечек в базах: <span class="font-bold text-red-600">${res.data.length}</span></p>`;
-                            }
-                        }
-                        cardHtml += `</div>`;
-                        summaryCards.innerHTML += cardHtml;
-                    });
-
-                    resultArea.classList.remove('hidden');
-                }
-            } catch (error) {
-                alert('Ошибка соединения с сервером');
-            } finally {
-                btn.disabled = false;
-                loading.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('loadHistoryBtn').addEventListener('click', async () => {
-            const historyArea = document.getElementById('historyArea');
-            const btn = document.getElementById('loadHistoryBtn');
-
-            btn.disabled = true;
-            btn.textContent = 'Загрузка...';
-            historyArea.classList.remove('hidden');
-            historyArea.innerHTML = '';
-
-            try {
-                const response = await fetch('/api/history');
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    if (data.data.length === 0) {
-                        historyArea.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">История пуста</p>';
-                    } else {
-                        data.data.forEach(item => {
-                            const date = new Date(item.created_at).toLocaleString('ru-RU', {
-                                day: '2-digit', month: '2-digit', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
-                            });
-                            historyArea.innerHTML += `
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
-                                    <div>
-                                        <p class="font-medium text-gray-900">${item.target}</p>
-                                        <p class="text-xs text-gray-500">${date} | ${item.type}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.threat_score > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                                            Score: ${item.threat_score}
-                                        </span>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    }
-                }
-            } catch (error) {
-                historyArea.innerHTML = '<p class="text-sm text-red-500 text-center py-4">Ошибка загрузки истории</p>';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Обновить историю';
-            }
-        });
-    </script>
+    <script src="/static/js/bundle.js"></script>
 </body>
 </html>

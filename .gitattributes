@@ -1,0 +1,7 @@
+templates/** linguist-generated=true
+static/** linguist-generated=true
+nginx/** linguist-generated=true
+Dockerfile linguist-generated=true
+docker-compose.yml linguist-generated=true
+*.ts linguist-language=TypeScript
+*.py linguist-language=Python

@@ -1,18 +1,24 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import DateTime, Integer, JSON, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-Base: Any = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 class ScanHistory(Base):
     __tablename__ = "scan_history"
 
-    id = Column(Integer, primary_key=True, index=True)
-    target = Column(String, index=True, nullable=False)
-    target_type = Column(String, nullable=False)
-    threat_score = Column(Integer, default=0)
-    results_payload = Column(JSON, nullable=False)
-    # Отрезаем tzinfo перед отправкой в базу данных
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    target: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    target_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    threat_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    results_payload: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
